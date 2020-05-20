@@ -1,5 +1,5 @@
 #
-# Copyright 2020, Cypress Semiconductor Corporation or a subsidiary of
+# Copyright 2018-2020, Cypress Semiconductor Corporation or a subsidiary of
 # Cypress Semiconductor Corporation. All Rights Reserved.
 #
 # This software, including source code, documentation and related
@@ -60,20 +60,13 @@ CONFIG=Debug
 VERBOSE=
 
 # default target
-TARGET=CYW920719B2Q40EVB-01
+TARGET=CYW920819EVB-02
 
 TARGET_DEVICE_MAP = \
   CYW920819EVB-02/20819A1 \
   CYW920820EVB-02/20820A1 \
-  CYBT-213043-EVAL/20819A1 \
-  CYBT-213043-MESH/20819A1 \
-  CYW989820EVB-01/20820A1 \
-  CYW920721B2EVK-01/20721B2 \
-  CYW920721B2EVK-03/20721B2 \
-  CYW920721B2EVK-02/20721B2 \
   CYW920719B2Q40EVB-01/20719B2 \
-  CYW920706WCDEVAL/20706A2 \
-  CYBT-353027-EVAL/20706A2
+  CYW920735Q60EVB-01/20735B1
 
 CY_TARGET_DEVICE = $(patsubst $(TARGET)/%,%,$(filter $(TARGET)%,$(TARGET_DEVICE_MAP)))
 
@@ -171,12 +164,11 @@ endif
 CY_APP_DEFINES+=\
     -DWICED_BT_TRACE_ENABLE
 
-CY_RECIPE_EXTRA_LIBS+=-lgcc
-
 #
 # Components (middleware libraries)
 #
 COMPONENTS +=bsp_design_modus
+CY_CONFIG_MODUS_FILE:=
 
 ################################################################################
 # Paths
@@ -188,6 +180,9 @@ CY_APP_PATH=.
 
 # Path (absolute or relative) to the bt-sdk folder (at repo root)
 CY_SHARED_PATH=$(CY_APP_PATH)/../wiced_btsdk
+
+# absolute path to the root of the BTSDK
+CY_SHARED_PATH_ABS=$(CURDIR)/../../../wiced_btsdk
 
 # Path (absolute or relative) to the base library
 CY_BASELIB_PATH=$(CY_SHARED_PATH)/dev-kit/baselib/$(CY_TARGET_DEVICE)
@@ -227,6 +222,9 @@ endif
 
 # path to WICED tools root folder
 CY_WICED_TOOLS_ROOT?=$(CY_SHARED_PATH)/dev-kit/btsdk-tools
+
+# tools that can be launched with "make open CY_OPEN_TYPE=<tool>
+CY_BT_APP_TOOLS=BTSpy ClientControl
 
 # getlibs path
 CY_GETLIBS_PATH=.

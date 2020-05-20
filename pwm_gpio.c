@@ -10,7 +10,7 @@
 *
 *
 *******************************************************************************
-* (c) 2020, Cypress Semiconductor Corporation. All rights reserved.
+* (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
 *******************************************************************************
 * This software, including source code, documentation and related materials
 * ("Software"), is owned by Cypress Semiconductor Corporation or one of its
@@ -216,25 +216,16 @@ void button_cb(void * data , uint8_t port_pin)
 void PWM_control(uint32_t arg)
 {
     uint32_t led;
-    PwmClockType clk = LHL_CLK;
-#if (defined(CYW20819A1) || defined(CYW20820A1))
-    pwm_config_t config;
-#else
-    wiced_pwm_config_t config;
-#endif
     uint32_t duty_cycle = 0;
-    uint8_t incr = TRUE;
+    uint8_t  incr = TRUE;
 	uint32_t current_duty_cycle = duty_cycle;
+	
+	PwmClockType clk = LHL_CLK;
+	wiced_pwm_config_t config;
 	
     /*Uncomment below lines for PMU Clock */
     // clk=PMU_CLK;
-// #if (defined(CYW20819A1) || defined(CYW20820A1))
-    // wiced_hal_aclk_enable(PWM_INP_CLK_IN_HZ, ACLK1,
-                          // ACLK_FREQ_24_MHZ);
-// #else
-    // wiced_hal_aclk_enable(PWM_INP_CLK_IN_HZ, WICED_ACLK1,
-                          // WICED_ACLK_FREQ_24_MHZ);
-// #endif
+	// wiced_hal_aclk_enable(PWM_INP_CLK_IN_HZ, WICED_ACLK1, WICED_ACLK_FREQ_24_MHZ);
 
     wiced_hal_pwm_get_params(PWM_INP_CLK_IN_HZ, duty_cycle, PWM_FREQ_IN_HZ, &config);
     wiced_hal_pwm_start(PWM1,
