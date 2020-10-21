@@ -1,7 +1,7 @@
 /******************************************************************************
 * File Name:   pwm_gpio.c
 *
-* Version:     1.0.0
+* Version:     2.0.0
 *
 * Description: This is the source code for the pwm_gpio Example
 *              for ModusToolbox.
@@ -10,7 +10,7 @@
 *
 *
 *******************************************************************************
-* (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
+* (c) 2020, Cypress Semiconductor Corporation. All rights reserved.
 *******************************************************************************
 * This software, including source code, documentation and related materials
 * ("Software"), is owned by Cypress Semiconductor Corporation or one of its
@@ -41,7 +41,6 @@
 * indemnify Cypress against all liability.
 *******************************************************************************/
 
-#include "GeneratedSource/cycfg_pins.h"
 #include "wiced.h"
 #include "wiced_platform.h"
 #include "sparcommon.h"
@@ -51,6 +50,7 @@
 #include "wiced_bt_trace.h"
 #include "wiced_hal_pwm.h"
 #include "wiced_hal_aclk.h"
+#include "GeneratedSource/cycfg_pins.h"
 
 /*****************************    Constants   *****************************/
 /* Thread will delay for 5ms */
@@ -70,9 +70,12 @@
 #define PWM_FREQ_IN_HZ              (5000)
 #define DUTY_STEP_SIZE              (1)
 
+/*Enable/Disable PMU Clock. 1-Enable, 0-Disable*/
+#define ENABLE_PMU_CLK              (0)
+
 /*****************************    Variables   *****************************/
-wiced_thread_t		* led_thread;
-uint8_t				pwm_flag = 0;
+wiced_thread_t     *led_thread;
+uint8_t             pwm_flag = 0;
 
 /*****************************    Function Prototypes   *******************/
 static wiced_result_t bt_cback(wiced_bt_management_evt_t event, 
@@ -100,13 +103,15 @@ void application_start(void)
     wiced_result_t result = WICED_BT_SUCCESS;
 
     wiced_set_debug_uart(WICED_ROUTE_DEBUG_TO_PUART);
-    WICED_BT_TRACE("*************Starting PWM GPIO Application**********\n\r");
-    WICED_BT_TRACE("Press Button SW3 on the kit to toggle LED1 and "
-                    "control PWM on LED2\n\r");
+    WICED_BT_TRACE( "\n--------------------------------------------------------- \n"
+                     "              PWM GPIO Application \n"
+                     "---------------------------------------------------------\n");
+
     /* Register BT stack callback*/
     result = wiced_bt_stack_init(bt_cback, NULL, NULL);
-	
-    if(WICED_BT_SUCCESS != result){
+
+    if(WICED_BT_SUCCESS != result)
+    {
         WICED_BT_TRACE("Stack Initialization Failed!!\n\r");
     }
 }
@@ -140,10 +145,10 @@ wiced_result_t bt_cback(wiced_bt_management_evt_t event,
         wiced_hal_gpio_select_function(CYBSP_D6,WICED_PWM1);
         wiced_hal_gpio_select_function(CYBSP_D7,WICED_PWM1);
         wiced_hal_gpio_select_function(LED2,WICED_PWM1);
-		
+
         /* Turn on LED1 */
         wiced_hal_gpio_set_pin_output(LED1, 0);
-		
+
         /* Registering interrupt*/
         wiced_hal_gpio_register_pin_for_interrupt(WICED_GPIO_PIN_BUTTON_1,
                                                   button_cb,
@@ -152,19 +157,19 @@ wiced_result_t bt_cback(wiced_bt_management_evt_t event,
                                     (GPIO_INPUT_ENABLE|GPIO_PULL_UP|GPIO_EN_INT_FALLING_EDGE),
                                      GPIO_PIN_OUTPUT_HIGH);
 
-        /* Start a thread to control LED blinking
-         * and Get memory for the thread handle */
+        /* Start a thread to control LED blinking and Get memory for the thread handle */
         led_thread = wiced_rtos_create_thread();
-        if (NULL!= led_thread){
-            wiced_rtos_init_thread(
-                    led_thread,                     // Thread handle
-                    PRIORITY_MEDIUM,                // Priority
-                    "PWM_thread",                   // Name
-                    PWM_control,                    // Function
-                    THREAD_STACK_MIN_SIZE,          // Stack
-                    NULL);                          // Function argument
+        if (led_thread!= NULL)
+        {
+            wiced_rtos_init_thread( led_thread,                     // Thread handle
+                                    PRIORITY_MEDIUM,                // Priority
+                                    "PWM_thread",                   // Name
+                                    PWM_control,                    // Function
+                                    THREAD_STACK_MIN_SIZE,          // Stack
+                                    NULL);                          // Function argument
         }
-        else{
+        else
+        {
             WICED_BT_TRACE("failed to create thread!!\n\r");
             result = WICED_ERROR;
         }
@@ -199,6 +204,10 @@ void button_cb(void * data , uint8_t port_pin)
     wiced_hal_gpio_set_pin_output(LED1, !led);
 
     pwm_flag = !pwm_flag;
+    if(pwm_flag)
+    {
+        WICED_BT_TRACE("PWM Started... ");
+    }
     wiced_hal_gpio_clear_pin_interrupt_status(port_pin);
 }
 
@@ -218,14 +227,15 @@ void PWM_control(uint32_t arg)
     uint32_t led;
     uint32_t duty_cycle = 0;
     uint8_t  incr = TRUE;
-	uint32_t current_duty_cycle = duty_cycle;
-	
-	PwmClockType clk = LHL_CLK;
-	wiced_pwm_config_t config;
-	
-    /*Uncomment below lines for PMU Clock */
-    // clk=PMU_CLK;
-	// wiced_hal_aclk_enable(PWM_INP_CLK_IN_HZ, WICED_ACLK1, WICED_ACLK_FREQ_24_MHZ);
+    uint32_t current_duty_cycle = duty_cycle;
+
+    PwmClockType clk = LHL_CLK;
+    wiced_pwm_config_t config;
+
+#if ENABLE_PMU_CLK
+    clk=PMU_CLK;
+    wiced_hal_aclk_enable(PWM_INP_CLK_IN_HZ, WICED_ACLK1, WICED_ACLK_FREQ_24_MHZ);
+#endif
 
     wiced_hal_pwm_get_params(PWM_INP_CLK_IN_HZ, duty_cycle, PWM_FREQ_IN_HZ, &config);
     wiced_hal_pwm_start(PWM1,
@@ -234,22 +244,35 @@ void PWM_control(uint32_t arg)
                         config.init_count,
                         INVERT_LED);
 
+    WICED_BT_TRACE("\n<< PWM configurations >>\n"
+                   "PWM Input clock source   : %s\n"
+                   "PWM Input clock Frequency: %d Hz\n"
+                   "PWM Output Frequency     : %d Hz\n",
+                   clk==0? "LHL_CLK" : "PMU_CLK",
+                   PWM_INP_CLK_IN_HZ,
+                   PWM_FREQ_IN_HZ);
+    WICED_BT_TRACE("\nPress User Button (SW3) to control PWM on LED2, and toggle LED1.\n\n");
+
     while(1)
     {
-        if(TRUE == pwm_flag)
+        if(pwm_flag==TRUE)
         {
-            if(TRUE == incr){
+            if(incr==TRUE)
+            {
                 duty_cycle += DUTY_STEP_SIZE;
-                if (duty_cycle == 100){
+                if (duty_cycle == 100)
+                {
                     incr = FALSE;
-				}
-			}
-			
-            else{
+                }
+            }
+
+            else
+            {
                 duty_cycle -= DUTY_STEP_SIZE;
-                if(duty_cycle == 0){
+                if(duty_cycle == 0)
+                {
                     incr = TRUE;
-				}
+                }
             }
 
             wiced_hal_pwm_get_params(PWM_INP_CLK_IN_HZ,
@@ -262,14 +285,14 @@ void PWM_control(uint32_t arg)
                                         config.init_count);
 
         }
-		
-        else if (current_duty_cycle != duty_cycle){
-			WICED_BT_TRACE("\nCurrent PWM duty cycle: %d%%\n\r",current_duty_cycle=duty_cycle);
-		}
+
+        else if (current_duty_cycle != duty_cycle)
+        {
+            WICED_BT_TRACE("PWM Stopped at %d%% duty cycle.\n\r", current_duty_cycle=duty_cycle);
+        }
         
         /* Send the thread to sleep for a period of time */
-        wiced_rtos_delay_milliseconds(THREAD_DELAY_IN_MS,
-                                      ALLOW_THREAD_TO_SLEEP );
+        wiced_rtos_delay_milliseconds(THREAD_DELAY_IN_MS, ALLOW_THREAD_TO_SLEEP);
     }
 
 }
