@@ -1,4 +1,4 @@
-/******************************************************************************
+/*******************************************************************************
 * File Name:   pwm_gpio.c
 *
 * Version:     2.0.0
@@ -9,23 +9,24 @@
 * Related Document: See README.md
 *
 *
-*******************************************************************************
-* (c) 2020, Cypress Semiconductor Corporation. All rights reserved.
-*******************************************************************************
-* This software, including source code, documentation and related materials
-* ("Software"), is owned by Cypress Semiconductor Corporation or one of its
-* subsidiaries ("Cypress") and is protected by and subject to worldwide patent
-* protection (United States and foreign), United States copyright laws and
-* international treaty provisions. Therefore, you may use this Software only
-* as provided in the license agreement accompanying the software package from
-* which you obtained this Software ("EULA").
+********************************************************************************
+* Copyright 2020-2021, Cypress Semiconductor Corporation (an Infineon company) or
+* an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
+* This software, including source code, documentation and related
+* materials ("Software") is owned by Cypress Semiconductor Corporation
+* or one of its affiliates ("Cypress") and is protected by and subject to
+* worldwide patent protection (United States and foreign),
+* United States copyright laws and international treaty provisions.
+* Therefore, you may use this Software only as provided in the license
+* agreement accompanying the software package from which you
+* obtained this Software ("EULA").
 * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
-* non-transferable license to copy, modify, and compile the Software source
-* code solely for use in connection with Cypress's integrated circuit products.
-* Any reproduction, modification, translation, compilation, or representation
-* of this Software except as specified above is prohibited without the express
-* written permission of Cypress.
+* non-transferable license to copy, modify, and compile the Software
+* source code solely for use in connection with Cypress's
+* integrated circuit products.  Any reproduction, modification, translation,
+* compilation, or representation of this Software except as specified
+* above is prohibited without the express written permission of Cypress.
 *
 * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND,
 * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED
@@ -36,9 +37,9 @@
 * not authorize its products for use in any products where a malfunction or
 * failure of the Cypress product may reasonably be expected to result in
 * significant property damage, injury or death ("High Risk Product"). By
-* including Cypress's product in a High Risk Product, the manufacturer of such
-* system or application assumes all risk of such use and in doing so agrees to
-* indemnify Cypress against all liability.
+* including Cypress's product in a High Risk Product, the manufacturer
+* of such system or application assumes all risk of such use and in doing
+* so agrees to indemnify Cypress against all liability.
 *******************************************************************************/
 
 #include "wiced.h"
@@ -52,7 +53,9 @@
 #include "wiced_hal_aclk.h"
 #include "GeneratedSource/cycfg_pins.h"
 
-/*****************************    Constants   *****************************/
+/*******************************************************************************
+ *                              Macros
+ ******************************************************************************/
 /* Thread will delay for 5ms */
 #define THREAD_DELAY_IN_MS          (5)
 
@@ -73,31 +76,35 @@
 /*Enable/Disable PMU Clock. 1-Enable, 0-Disable*/
 #define ENABLE_PMU_CLK              (0)
 
-/*****************************    Variables   *****************************/
+/*******************************************************************************
+ *                          Variables Definitions
+ ******************************************************************************/
+ 
 wiced_thread_t     *led_thread;
 uint8_t             pwm_flag = 0;
 
-/*****************************    Function Prototypes   *******************/
+/*******************************************************************************
+ *                          Function Prototypes
+ ******************************************************************************/
+ 
 static wiced_result_t bt_cback(wiced_bt_management_evt_t event, 
                                wiced_bt_management_evt_data_t *p_event_data );
 static void PWM_control(uint32_t arg);
 static void button_cb(void * data , uint8_t port_pin);
 
-/*****************************    Functions   *****************************/
-/*
- Function name:
- application_start
-
+/*******************************************************************************
+ Function name: application_start
+********************************************************************************
  Function Description:
  @brief    Starting point of your application. Entry point to the application.
-           Set device configuration and start BT stack initialization.
+           Set device configuration and start Bluetooth stack initialization.
            The actual application initialization will happen when stack reports
            that BT device is ready.
 
  @param void
 
  @return void
- */
+ ******************************************************************************/
 void application_start(void)
 {
     wiced_result_t result = WICED_BT_SUCCESS;
@@ -112,13 +119,12 @@ void application_start(void)
 
     if(WICED_BT_SUCCESS != result)
     {
-        WICED_BT_TRACE("Stack Initialization Failed!!\n\r");
+        WICED_BT_TRACE("Bluetooth stack initialization failed!\n\r");
     }
 }
 
-/*
- Function Name:
- bt_cback
+/*******************************************************************************
+ Function Name: bt_cback
 
  Function Description:
  @brief  Callback function that will be invoked by application_start()
@@ -127,7 +133,7 @@ void application_start(void)
  @param  p_event_data    Pointer to the the bluetooth management event data
 
  @return        status of the callback function
- */
+ ******************************************************************************/
 wiced_result_t bt_cback(wiced_bt_management_evt_t event,
                         wiced_bt_management_evt_data_t *p_event_data)
 {
@@ -181,9 +187,8 @@ wiced_result_t bt_cback(wiced_bt_management_evt_t event,
     return result;
 }
 
-/*
- Function Name:
- button_cb
+/*******************************************************************************
+ Function Name: button_cb
 
  Function Description:
  @brief  Call back function to process the button interrupt, used for toggling
@@ -195,7 +200,7 @@ wiced_result_t bt_cback(wiced_bt_management_evt_t event,
                         internally
 
  @return  none
- */
+ ******************************************************************************/
 void button_cb(void * data , uint8_t port_pin)
 {
     uint32_t led;
@@ -211,9 +216,8 @@ void button_cb(void * data , uint8_t port_pin)
     wiced_hal_gpio_clear_pin_interrupt_status(port_pin);
 }
 
-/*
- Function Name:
- PWM_control
+/*******************************************************************************
+ Function Name: PWM_control
 
  Function Description:
  @brief  sensor thread responsible for controlling PWM
@@ -221,7 +225,7 @@ void button_cb(void * data , uint8_t port_pin)
  @param  arg           unused
 
  @return  none
- */
+ ******************************************************************************/
 void PWM_control(uint32_t arg)
 {
     uint32_t led;
